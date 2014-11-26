@@ -42,3 +42,5 @@ ref_wa->set_value( im_name = 'f3' im_value = 69 ).
 " append 'work area' to 'internal table'
 ref_it->append( ref_wa ).
 ```
+###How to Deploy?
+Read file 'HOW TO INSTALL.docx'
