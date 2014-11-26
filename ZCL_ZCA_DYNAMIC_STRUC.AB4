@@ -1,0 +1,140 @@
+class ZCL_ZCA_DYNAMIC_STRUC definition
+  public
+  final
+  create public .
+
+public section.
+
+  methods CONSTRUCTOR
+    importing
+      !IM_IT_STRUC_DEF type ZCL_ZCA_TYPE_UTILS=>TT_STRUC_DEFINITION .
+  methods SET_VALUE
+    importing
+      value(IM_NAME) type ZCL_ZCA_TYPE_UTILS=>TY_STRUC_DEFINITION-FNAME
+      !IM_VALUE type DATA .
+  methods GET_VALUE
+    importing
+      value(IM_NAME) type ZCL_ZCA_TYPE_UTILS=>TY_STRUC_DEFINITION-FNAME
+    exporting
+      value(VALUE) type DATA .
+  methods CLEAR .
+  methods GET_REF_DATA
+    returning
+      value(REF_DATA) type ref to DATA .
+protected section.
+private section.
+
+  data REF_STRUC_DATA type ref to DATA .
+ENDCLASS.
+
+
+
+CLASS ZCL_ZCA_DYNAMIC_STRUC IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_STRUC->CLEAR
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD CLEAR.
+  FIELD-SYMBOLS <lwa_struc> TYPE any.
+
+  ASSIGN me->ref_struc_data->* TO <lwa_struc>.
+  CLEAR <lwa_struc>.
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_STRUC->CONSTRUCTOR
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_IT_STRUC_DEF                TYPE        ZCL_ZCA_TYPE_UTILS=>TT_STRUC_DEFINITION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD CONSTRUCTOR.
+*&---------------------------------------------------------------------*
+*& Developer        : Aristo (c)
+*&---------------------------------------------------------------------*
+* (C) Aristo Suryawardhana Hadisoeganda, 2013
+*     all right reserved
+*
+*  PLEASE DO NOT REDISTRIBUTE WITHOUT AUTHOR'S PERMISSION
+*
+*                `
+*               .:;'''''''''';:.`
+*           ,+#',`             `,+#+:`
+*        ,++.`  `,;'',``        .'+''++@@@@+;`
+*   `  :#; `:+@@;`   `````.....``    .'##@+:;#+`
+*    ,@, :###. :@+:::;#+,         `+#.   .+##+.
+*   ;'`:+#'. .#,        ''`      ,#,    .'@#,;:
+*  ,+`      .#.         `+,     `',         `''
+*  ';`   ```:+`,@@@+`   `+:     `':        `''#:
+* `+.   `,:,;#'.+#,     ;+`      `:@@++##@#@#.';`
+* :'`      ..`.'+':,,,'#,           `';      .'+.
+*`+:      ``               ``  ``;#@+``'#;:+#: `+,
+*`+,                        `...` ;+ .+@';;:,#, :'
+*.#.                   .:,.``````;#.`':`;`;`':+`,'`
+*`+,                   ``   `    ''`.+:`.....,#.;;
+*`;' `                   ````````,+`.+.      :+.',`''`      `:'++++':``.++.
+* .+.`,  `  `                    `+,.+.     `+.;'``''`     `:+:`  `:+:`.+'.
+*  ;'``.`, `.`                   `':.+.    `':`#, `''`     .''.   `.''..''.
+*  `+, `...  `.`      ``         `';.'.    `+.`+, `''` `` `.'+. `` ,''..''.`
+*  `:'  `,:`   .`     `.,:,`     .+,:;`    .'. :;``'':,,,,.`,++:,,:++, .'':,,,,`
+*   `';  `:,`  ``      `.``,,.   ;;`+#'';,  ;; .'.`,;;;:::,  `.,::,.`  `:::::::.
+*    `+;` .:,` `.         ...`  .'`.+`   `;:.+.`'.
+*     `+:` ...  `,`   `:++;` ,.`'; ,+,,,,::'#+``'`
+*      `+:  .:,`` `..      .;;` +: ,'`;.,:' :; .'.
+*       `'+`  .`.,.  .,`    ` :+#: `++.`:;#@+` :;`
+*         ,+;  `.,..,.```       ''` `:++'+#;` :#`
+*           ,#+.   `.,::,.`.``   ''`        `''`
+*              .'@+,`    `.,,..`..`:##+''+#',`
+*               `  ,+@@',`        ````;#:
+*                        ,'#',`.,'@'.`
+*                            `..`
+*&---------------------------------------------------------------------*
+  me->ref_struc_data = zcl_zca_type_utils=>generate_structure( im_it_struc_def ).
+  me->clear( ).
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_STRUC->GET_REF_DATA
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] REF_DATA                       TYPE REF TO DATA
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD GET_REF_DATA.
+  ref_data = me->ref_struc_data.
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_STRUC->GET_VALUE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_NAME                        TYPE        ZCL_ZCA_TYPE_UTILS=>TY_STRUC_DEFINITION-FNAME
+* | [<---] VALUE                          TYPE        DATA
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD GET_VALUE.
+  FIELD-SYMBOLS <lwa_struc> TYPE ANY.
+  FIELD-SYMBOLS <lv_field>  TYPE ANY.
+
+  TRANSLATE im_name TO UPPER CASE.
+  ASSIGN me->ref_struc_data->* TO <lwa_struc>.
+  ASSIGN COMPONENT im_name OF STRUCTURE <lwa_struc> TO <lv_field>.
+  value = <lv_field>.
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_STRUC->SET_VALUE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_NAME                        TYPE        ZCL_ZCA_TYPE_UTILS=>TY_STRUC_DEFINITION-FNAME
+* | [--->] IM_VALUE                       TYPE        DATA
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD SET_VALUE.
+  FIELD-SYMBOLS <lwa_struc> TYPE ANY.
+  FIELD-SYMBOLS <lv_field>  TYPE ANY.
+
+  TRANSLATE im_name TO UPPER CASE.
+  ASSIGN me->ref_struc_data->* TO <lwa_struc>.
+  ASSIGN COMPONENT im_name OF STRUCTURE <lwa_struc> TO <lv_field>.
+  <lv_field> = im_value.
+ENDMETHOD.
+ENDCLASS.

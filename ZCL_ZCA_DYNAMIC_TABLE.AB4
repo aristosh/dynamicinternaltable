@@ -1,0 +1,394 @@
+class ZCL_ZCA_DYNAMIC_TABLE definition
+  public
+  final
+  create public .
+
+public section.
+
+  types:
+    BEGIN OF TY_condition,
+            field TYPE char30,
+            value TYPE char512,
+          END OF TY_condition .
+  types:
+    TT_condition TYPE STANDARD TABLE OF ty_condition .
+  types:
+    BEGIN OF TY_SORTBY,
+            field TYPE char30,
+            mode  TYPE char1, " 'A' = Ascending/'D' = Descending
+          END OF TY_SORTBY .
+  types:
+    TT_SORTBY TYPE STANDARD TABLE OF ty_sortby .
+
+  methods CONSTRUCTOR
+    importing
+      !IM_IT_STRUC_DEF type ZCL_ZCA_TYPE_UTILS=>TT_STRUC_DEFINITION .
+  class ZCL_ZCA_DYNAMIC_TABLE definition load .
+  methods READ_TABLE
+    importing
+      !IM_INDEX type SYST-TABIX optional
+      value(IM_IT_WITHKEY) type ZCL_ZCA_DYNAMIC_TABLE=>TT_CONDITION optional
+      !IM_BINARYSEARCH type CHAR1 optional
+    exporting
+      !EX_TABIX type SYST-TABIX
+      !EX_INTO_OBJECT type ref to ZCL_ZCA_DYNAMIC_STRUC
+      !EX_INTO_DATA type ref to DATA
+      !EX_SUBRC type SYST-SUBRC .
+  methods APPEND
+    importing
+      !IM_OBJECT type ref to ZCL_ZCA_DYNAMIC_STRUC optional .
+  methods DELETE
+    importing
+      !IM_INDEX type SYST-TABIX default 0
+      !IM_WHERE type CHAR512 default SPACE
+      !IM_IT_WHERE type ZCL_ZCA_DYNAMIC_TABLE=>TT_CONDITION optional
+    exporting
+      !EX_SUBRC type SYST-SUBRC .
+  methods REFRESH .
+  methods GET_REF_DATA
+    returning
+      value(REF_DATA) type ref to DATA .
+  methods MODIFY
+    importing
+      !IM_OBJECT type ref to ZCL_ZCA_DYNAMIC_STRUC
+      !IM_INDEX type SYST-TABIX .
+  methods SORT
+    importing
+      !IM_BY type CHAR100 .
+protected section.
+private section.
+
+  data REF_TABLE_DATA type ref to DATA .
+ENDCLASS.
+
+
+
+CLASS ZCL_ZCA_DYNAMIC_TABLE IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->APPEND
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_OBJECT                      TYPE REF TO ZCL_ZCA_DYNAMIC_STRUC(optional)
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD append.
+  FIELD-SYMBOLS <lwa_row>   TYPE any.
+  FIELD-SYMBOLS <lit_table> TYPE STANDARD TABLE.
+
+  DATA lv_line    TYPE i.
+  DATA lref_struc TYPE REF TO data.
+
+  lref_struc = im_object->get_ref_data( ).
+  ASSIGN lref_struc->* TO <lwa_row>.
+
+  ASSIGN me->ref_table_data->* TO <lit_table>.
+
+  INSERT <lwa_row> INTO TABLE <lit_table>.
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->CONSTRUCTOR
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_IT_STRUC_DEF                TYPE        ZCL_ZCA_TYPE_UTILS=>TT_STRUC_DEFINITION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD constructor.
+*&---------------------------------------------------------------------*
+*& Developer        : Aristo (c)
+*&---------------------------------------------------------------------*
+* (C) Aristo Suryawardhana Hadisoeganda, 2013
+*     all right reserved
+*
+*  PLEASE DO NOT REDISTRIBUTE WITHOUT AUTHOR'S PERMISSION
+*
+*                `
+*               .:;'''''''''';:.`
+*           ,+#',`             `,+#+:`
+*        ,++.`  `,;'',``        .'+''++@@@@+;`
+*   `  :#; `:+@@;`   `````.....``    .'##@+:;#+`
+*    ,@, :###. :@+:::;#+,         `+#.   .+##+.
+*   ;'`:+#'. .#,        ''`      ,#,    .'@#,;:
+*  ,+`      .#.         `+,     `',         `''
+*  ';`   ```:+`,@@@+`   `+:     `':        `''#:
+* `+.   `,:,;#'.+#,     ;+`      `:@@++##@#@#.';`
+* :'`      ..`.'+':,,,'#,           `';      .'+.
+*`+:      ``               ``  ``;#@+``'#;:+#: `+,
+*`+,                        `...` ;+ .+@';;:,#, :'
+*.#.                   .:,.``````;#.`':`;`;`':+`,'`
+*`+,                   ``   `    ''`.+:`.....,#.;;
+*`;' `                   ````````,+`.+.      :+.',`''`      `:'++++':``.++.
+* .+.`,  `  `                    `+,.+.     `+.;'``''`     `:+:`  `:+:`.+'.
+*  ;'``.`, `.`                   `':.+.    `':`#, `''`     .''.   `.''..''.
+*  `+, `...  `.`      ``         `';.'.    `+.`+, `''` `` `.'+. `` ,''..''.`
+*  `:'  `,:`   .`     `.,:,`     .+,:;`    .'. :;``'':,,,,.`,++:,,:++, .'':,,,,`
+*   `';  `:,`  ``      `.``,,.   ;;`+#'';,  ;; .'.`,;;;:::,  `.,::,.`  `:::::::.
+*    `+;` .:,` `.         ...`  .'`.+`   `;:.+.`'.
+*     `+:` ...  `,`   `:++;` ,.`'; ,+,,,,::'#+``'`
+*      `+:  .:,`` `..      .;;` +: ,'`;.,:' :; .'.
+*       `'+`  .`.,.  .,`    ` :+#: `++.`:;#@+` :;`
+*         ,+;  `.,..,.```       ''` `:++'+#;` :#`
+*           ,#+.   `.,::,.`.``   ''`        `''`
+*              .'@+,`    `.,,..`..`:##+''+#',`
+*               `  ,+@@',`        ````;#:
+*                        ,'#',`.,'@'.`
+*                            `..`
+*&---------------------------------------------------------------------*
+  me->ref_table_data = zcl_zca_type_utils=>generate_table( im_it_struc_def ).
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->DELETE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_INDEX                       TYPE        SYST-TABIX (default =0)
+* | [--->] IM_WHERE                       TYPE        CHAR512 (default =SPACE)
+* | [--->] IM_IT_WHERE                    TYPE        ZCL_ZCA_DYNAMIC_TABLE=>TT_CONDITION(optional)
+* | [<---] EX_SUBRC                       TYPE        SYST-SUBRC
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD delete.
+  FIELD-SYMBOLS <lit_table> TYPE STANDARD TABLE.
+
+  DATA lv_off    TYPE i.
+  DATA lv_where  TYPE char4000.
+  DATA lwa_where TYPE zcl_zca_dynamic_table=>ty_condition.
+
+  ASSIGN me->ref_table_data->* TO <lit_table>.
+
+  IF im_index IS SUPPLIED.
+    DELETE <lit_table> INDEX im_index.
+  ELSEIF im_where IS SUPPLIED.
+    DELETE <lit_table> WHERE (im_where).
+  ELSEIF im_it_where IS SUPPLIED.
+    CLEAR lv_where.
+    LOOP AT im_it_where INTO lwa_where.
+      CONCATENATE '''' lwa_where-value '''' INTO lwa_where-value.
+      CONCATENATE lv_where lwa_where-field '= ' lwa_where-value ' AND' INTO lv_where SEPARATED BY space.
+      CONDENSE lv_where.
+    ENDLOOP.
+
+    " delete the last 'AND'
+    IF sy-subrc = 0.
+      SHIFT lv_where LEFT DELETING LEADING space.
+      lv_off = strlen( lv_where ) - 3.
+      lv_where = lv_where(lv_off).
+
+      TRY .
+        DELETE <lit_table> WHERE (lv_where).
+      CATCH cx_root.
+        BREAK-POINT.
+      ENDTRY.
+    ENDIF.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->GET_REF_DATA
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] REF_DATA                       TYPE REF TO DATA
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method GET_REF_DATA.
+  ref_data = me->ref_table_data.
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->MODIFY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_OBJECT                      TYPE REF TO ZCL_ZCA_DYNAMIC_STRUC
+* | [--->] IM_INDEX                       TYPE        SYST-TABIX
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD modify.
+  FIELD-SYMBOLS <lit_table> TYPE STANDARD TABLE.
+  FIELD-SYMBOLS <lwa_row>   TYPE ANY.
+
+  DATA lref_row TYPE REF TO data.
+
+  lref_row = im_object->get_ref_data( ).
+  ASSIGN me->ref_table_data->* TO <lit_table>.
+  ASSIGN lref_row->*           TO <lwa_row>.
+  MODIFY <lit_table> FROM <lwa_row> INDEX im_index.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->READ_TABLE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_INDEX                       TYPE        SYST-TABIX(optional)
+* | [--->] IM_IT_WITHKEY                  TYPE        ZCL_ZCA_DYNAMIC_TABLE=>TT_CONDITION(optional)
+* | [--->] IM_BINARYSEARCH                TYPE        CHAR1(optional)
+* | [<---] EX_TABIX                       TYPE        SYST-TABIX
+* | [<---] EX_INTO_OBJECT                 TYPE REF TO ZCL_ZCA_DYNAMIC_STRUC
+* | [<---] EX_INTO_DATA                   TYPE REF TO DATA
+* | [<---] EX_SUBRC                       TYPE        SYST-SUBRC
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD read_table.
+  DATA lv_progam      TYPE char10.
+  DATA lv_message     TYPE char255.
+  DATA lv_line        TYPE i.
+  DATA lv_code        TYPE char100.
+  DATA lv_type        TYPE char30.
+  DATA lv_index       TYPE char10.
+  DATA lit_code       TYPE STANDARD TABLE OF char100.
+  DATA lit_components TYPE cl_abap_structdescr=>component_table.
+  DATA lwa_component  TYPE LINE OF cl_abap_structdescr=>component_table.
+  DATA lwa_withkey    TYPE zcl_zca_dynamic_table=>ty_condition.
+  DATA lwa_struct_def TYPE zcl_zca_type_utils=>ty_struc_definition.
+  DATA lit_struct_def TYPE zcl_zca_type_utils=>tt_struc_definition.
+
+  DATA lref_tabledescr  TYPE REF TO cl_abap_tabledescr.
+  DATA lref_structdescr TYPE REF TO cl_abap_structdescr.
+  DATA lref_elemdescr   TYPE REF TO cl_abap_elemdescr.
+  DATA lref_struc       TYPE REF TO data.
+
+  FIELD-SYMBOLS <lit_table> TYPE ANY TABLE.
+  FIELD-SYMBOLS <lwa_row>   TYPE any.
+
+  ASSIGN me->ref_table_data->* TO <lit_table>.
+
+  lref_tabledescr  ?= cl_abap_tabledescr=>describe_by_data_ref( me->ref_table_data ).
+  lref_structdescr ?= lref_tabledescr->get_table_line_type( ).
+  lit_components = lref_structdescr->get_components( ).
+
+  CLEAR lit_struct_def[].
+  LOOP AT lit_components INTO lwa_component.
+    lwa_struct_def-fname = lwa_component-name.
+    lref_elemdescr ?= lwa_component-type.
+    lwa_struct_def-ftype = lref_elemdescr->get_relative_name( ).
+    APPEND lwa_struct_def TO lit_struct_def.
+  ENDLOOP.
+  "$ Region idiot proof
+  " in case you forget to create instance
+  IF ex_into_object IS SUPPLIED.
+    IF ex_into_object IS NOT BOUND.
+      CREATE OBJECT ex_into_object
+        EXPORTING
+          im_it_struc_def = lit_struct_def.
+    ENDIF.
+    lref_struc = ex_into_object->get_ref_data( ).
+    ASSIGN lref_struc->* TO <lwa_row>.
+  ENDIF.
+
+  IF ex_into_data IS SUPPLIED.
+    IF ex_into_data IS NOT BOUND.
+      IF ex_into_object IS NOT BOUND.
+        CREATE OBJECT ex_into_object
+          EXPORTING
+            im_it_struc_def = lit_struct_def.
+      ENDIF.
+      ex_into_data = ex_into_object->get_ref_data( ).
+    ENDIF.
+    ASSIGN ex_into_data->* TO <lwa_row>.
+  ENDIF.
+  "$ Endregion idiot proof
+
+  "$ Region auto generate code
+  CLEAR lit_code[].
+  APPEND 'PROGRAM.' TO lit_code.
+  APPEND 'TYPES: BEGIN OF ty_table,' TO lit_code.
+  LOOP AT lit_struct_def INTO lwa_struct_def.
+    CONCATENATE lwa_struct_def-fname 'TYPE' lwa_struct_def-ftype ',' INTO lv_code SEPARATED BY space.
+    APPEND lv_code TO lit_code.
+  ENDLOOP.
+  APPEND 'END OF ty_table.' TO lit_code.
+  APPEND 'TYPES tt_table TYPE STANDARD TABLE OF ty_table.' TO lit_code.
+  APPEND 'FORM read_table USING    pit_table TYPE tt_table'    TO lit_code.
+  APPEND '                CHANGING pwa_row   TYPE ty_table'    TO lit_code.
+  APPEND '                         pv_tabix  TYPE syst-tabix'  TO lit_code.
+  APPEND '                         pv_subrc  TYPE syst-subrc.' TO lit_code.
+  IF im_index IS SUPPLIED.
+    lv_index = im_index.
+    CONCATENATE 'READ TABLE pit_table INDEX' lv_index INTO lv_code SEPARATED BY space.
+    APPEND lv_code TO lit_code.
+  ELSEIF im_it_withkey IS SUPPLIED.
+    CLEAR lv_code.
+    APPEND 'READ TABLE pit_table INTO pwa_row WITH KEY' TO lit_code.
+    LOOP AT im_it_withkey INTO lwa_withkey.
+      CONCATENATE '''' lwa_withkey-value '''' INTO lwa_withkey-value.
+      CONCATENATE lwa_withkey-field '=' lwa_withkey-value INTO lv_code SEPARATED BY space.
+      APPEND lv_code TO lit_code.
+    ENDLOOP.
+    IF im_binarysearch = 'X'.
+      APPEND 'BINARY SEARCH' TO lit_code.
+    ENDIF.
+    APPEND '.' TO lit_code.
+  ENDIF.
+  APPEND 'ENDFORM.' TO lit_code.
+  "$ Endregion auto generate code
+
+  GENERATE SUBROUTINE POOL lit_code NAME lv_progam MESSAGE lv_message LINE lv_line.
+  IF sy-subrc = 0.
+    PERFORM read_table IN PROGRAM (lv_progam) IF FOUND USING <lit_table>
+                                                       CHANGING <lwa_row>
+                                                                ex_tabix
+                                                                ex_subrc.
+  ENDIF.
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->REFRESH
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method REFRESH.
+  FIELD-SYMBOLS <lit_table> TYPE STANDARD TABLE.
+
+  ASSIGN me->ref_table_data->* TO <lit_table>.
+  REFRESH <lit_table>.
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_ZCA_DYNAMIC_TABLE->SORT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IM_BY                          TYPE        CHAR100
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD sort.
+  DATA lv_progam  TYPE char10.
+  DATA lv_message TYPE char255.
+  DATA lv_line    TYPE i.
+  DATA lv_code    TYPE char100.
+  DATA lv_type    TYPE char30.
+  DATA lit_code   TYPE STANDARD TABLE OF char100.
+  DATA lit_components TYPE cl_abap_structdescr=>component_table.
+  DATA lwa_component  TYPE LINE OF cl_abap_structdescr=>component_table.
+
+  DATA lref_tabledescr  TYPE REF TO cl_abap_tabledescr.
+  DATA lref_structdescr TYPE REF TO cl_abap_structdescr.
+  DATA lref_elemdescr   TYPE REF TO cl_abap_elemdescr.
+
+  FIELD-SYMBOLS <lit_table> TYPE ANY TABLE.
+
+  ASSIGN me->ref_table_data->* TO <lit_table>.
+
+  lref_tabledescr  ?= cl_abap_tabledescr=>describe_by_data_ref( me->ref_table_data ).
+  lref_structdescr ?= lref_tabledescr->get_table_line_type( ).
+  lit_components = lref_structdescr->get_components( ).
+
+  "$ Region auto generate code
+  CLEAR lit_code[].
+  APPEND 'PROGRAM.' TO lit_code.
+  APPEND 'TYPES: BEGIN OF ty_table,' TO lit_code.
+  LOOP AT lit_components INTO lwa_component.
+    lref_elemdescr ?= lwa_component-type.
+    lv_type = lref_elemdescr->get_relative_name( ).
+    CONCATENATE lwa_component-name 'TYPE' lv_type ',' INTO lv_code SEPARATED BY space.
+    APPEND lv_code TO lit_code.
+  ENDLOOP.
+  APPEND 'END OF ty_table.' TO lit_code.
+  APPEND 'TYPES tt_table TYPE STANDARD TABLE OF ty_table.' TO lit_code.
+  APPEND 'FORM sort CHANGING pit_table TYPE tt_table.' TO lit_code.
+  CONCATENATE 'SORT pit_table BY' im_by '.' INTO lv_code SEPARATED BY space.
+  APPEND lv_code TO lit_code.
+  APPEND 'ENDFORM.' TO lit_code.
+  "$ Endregion auto generate code
+
+  GENERATE SUBROUTINE POOL lit_code NAME lv_progam MESSAGE lv_message LINE lv_line.
+  IF sy-subrc = 0.
+    PERFORM sort IN PROGRAM (lv_progam) IF FOUND CHANGING <lit_table>.
+  ENDIF.
+
+ENDMETHOD.
+ENDCLASS.

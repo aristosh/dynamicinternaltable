@@ -1,0 +1,118 @@
+*&---------------------------------------------------------------------*
+*& Report  YARISTO
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT yaristo.
+
+DATA wa TYPE zcl_zca_type_utils=>ty_struc_definition.
+DATA it TYPE zcl_zca_type_utils=>tt_struc_definition.
+
+DATA ref_it TYPE REF TO zcl_zca_dynamic_table.
+DATA ref_wa TYPE REF TO zcl_zca_dynamic_struc.
+DATA ref_it_data TYPE REF TO data.
+DATA ref_wa_data TYPE REF TO data.
+
+DATA it_withkey TYPE zcl_zca_dynamic_table=>tt_condition.
+DATA wa_withkey TYPE zcl_zca_dynamic_table=>ty_condition.
+
+DATA it_where TYPE zcl_zca_dynamic_table=>tt_condition.
+DATA wa_where TYPE zcl_zca_dynamic_table=>ty_condition.
+DATA lv_tabix TYPE sy-tabix.
+DATA lv_subrc TYPE sy-subrc.
+
+
+FIELD-SYMBOLS <it> TYPE STANDARD TABLE.
+FIELD-SYMBOLS <wa> TYPE ANY.
+
+" define structure
+wa-fname = 'f1'.
+wa-ftype = 'i'.
+APPEND wa TO it.
+wa-fname = 'f2'.
+wa-ftype = 'char50'.
+APPEND wa TO it.
+wa-fname = 'f3'.
+wa-ftype = 'i'.
+APPEND wa TO it.
+
+BREAK-POINT.
+" create dynamic INTERNAL TABLE object
+CREATE OBJECT ref_it
+  EXPORTING
+    im_it_struc_def = it.
+
+" create dynamic WORK AREA object
+CREATE OBJECT ref_wa
+  EXPORTING
+    im_it_struc_def = it.
+
+ref_wa->set_value( im_name = 'f1' im_value = 1 ).
+ref_wa->set_value( im_name = 'f2' im_value = 'Hello' ).
+ref_wa->set_value( im_name = 'f3' im_value = 99 ).
+ref_it->append( ref_wa ).
+
+ref_wa->set_value( im_name = 'f1' im_value = 2 ).
+ref_wa->set_value( im_name = 'f2' im_value = 'World' ).
+ref_wa->set_value( im_name = 'f3' im_value = 88 ).
+ref_it->append( ref_wa ).
+
+ref_wa->set_value( im_name = 'f1' im_value = 3 ).
+ref_wa->set_value( im_name = 'f2' im_value = 'Welcome' ).
+ref_wa->set_value( im_name = 'f3' im_value = 69 ).
+ref_it->append( ref_wa ).
+
+ref_wa->set_value( im_name = 'f1' im_value = 4 ).
+ref_wa->set_value( im_name = 'f2' im_value = 'Welcome' ).
+ref_wa->set_value( im_name = 'f3' im_value = 69 ).
+ref_it->append( ref_wa ).
+
+ref_wa->set_value( im_name = 'f1' im_value = 2 ).
+ref_wa->set_value( im_name = 'f2' im_value = 'World' ).
+ref_wa->set_value( im_name = 'f3' im_value = 88 ).
+ref_it->append( ref_wa ).
+ref_it->append( ref_wa ).
+ref_it->append( ref_wa ).
+ref_it->append( ref_wa ).
+ref_it->append( ref_wa ).
+ref_it->append( ref_wa ).
+ref_it->append( ref_wa ).
+
+BREAK-POINT.
+
+" sort
+ref_it->sort( 'F2 ASCENDING F1 DESCENDING' ).
+
+" define your WITH KEY
+wa_withkey-field = 'F2'.
+wa_withkey-value = 'Welcome'.
+APPEND wa_withkey TO it_withkey[].
+
+wa_withkey-field = 'F1'.
+wa_withkey-value = 3.
+APPEND wa_withkey TO it_withkey[].
+
+BREAK-POINT.
+ref_wa->clear( ).
+" read table
+ref_it->read_table(
+  EXPORTING
+    im_it_withkey   = it_withkey
+    im_binarysearch = 'X'
+  IMPORTING
+    ex_into_object = ref_wa
+).
+
+BREAK-POINT.
+" get original WORK AREA
+ref_wa_data = ref_wa->get_ref_data( ).
+ASSIGN ref_wa_data->* TO <wa>.
+
+
+ref_it->modify( im_object = ref_wa
+                im_index = 1 ).
+
+BREAK-POINT.
